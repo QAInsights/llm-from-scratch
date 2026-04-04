@@ -14,6 +14,8 @@ The architecture is a stack of identical **transformer blocks**, each containing
 
 ## Write It: `model.py`
 
+Create a new file called `model.py` in your scratchpad. You'll add each class one at a time as you read through this section. By the end, the file will contain `GPTConfig`, `CausalSelfAttention`, `MLP`, `Block`, and `GPT`.
+
 ### Configuration
 
 ```python

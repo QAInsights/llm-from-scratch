@@ -2,6 +2,8 @@
 
 Your model is trained. Now let's make it write. Text generation with a GPT is **autoregressive**: generate one token at a time, append it to the input, and repeat.
 
+Create a new file called `generate.py` in your scratchpad. Once you've written it, go back to `train.py` and add `from generate import generate` at the top — this enables the sample generation during training that you skipped in Part 3.
+
 ## The Naive Approach: Greedy Decoding
 
 Always pick the most probable next token.
@@ -82,6 +84,21 @@ The pipeline for each token:
 `@torch.no_grad()` disables gradient computation — we don't need it for inference and it saves memory.
 
 The function takes `stoi`/`itos` mappings from the training data — these define how characters map to token IDs and back.
+
+## Reproducibility with Seeds
+
+Generation involves random sampling (`torch.multinomial`), so the same prompt produces different output each time. To get reproducible results, set a seed before generating:
+
+```python
+torch.manual_seed(42)
+print(generate(model, "To be or not", stoi, itos, temperature=0.8))
+# same output every time with seed=42
+```
+
+From the command line:
+```bash
+python generate.py checkpoint_final.pt --prompt "To be or not" --seed 42
+```
 
 ## Try Different Settings
 

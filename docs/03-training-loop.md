@@ -10,6 +10,10 @@ This is a self-supervised task — the labels come from the data itself. Every p
 
 ## Write It: `train.py`
 
+Create a new file called `train.py` in your scratchpad. This file imports from `model.py` (which you wrote in Part 2) and from `generate.py` (which you'll write in Part 4 — skip the sample generation for now and come back to add it after Part 4).
+
+Add each piece below to `train.py` as you read through this section.
+
 ### Step 1: Data Loading (Character-Level)
 
 ```python

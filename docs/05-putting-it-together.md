@@ -1,6 +1,6 @@
 # Part 5: Putting It All Together
 
-Time to wire everything up, train on real data, and run experiments.
+Time to wire everything up, train on real data, and prepare for the competition.
 
 ## Project Structure
 
@@ -15,6 +15,30 @@ scratchpad/
 
 The Shakespeare dataset is included in the repo at `data/shakespeare.txt` — no download needed.
 
+### Google Colab
+
+If you're using Colab instead of a local setup:
+
+1. Open a new notebook at [colab.research.google.com](https://colab.research.google.com/)
+2. Go to **Runtime → Change runtime type → GPU (T4)**
+3. Install dependencies in the first cell:
+   ```python
+   !pip install -q torch numpy tqdm tiktoken
+   ```
+4. Download Shakespeare:
+   ```python
+   import urllib.request, os
+   os.makedirs("data", exist_ok=True)
+   urllib.request.urlretrieve(
+       "https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt",
+       "data/shakespeare.txt"
+   )
+   ```
+5. Write your model, training loop, and generate code in notebook cells (paste from the docs or write it yourself)
+6. Use `"data/shakespeare.txt"` as the data path (not `"../data/shakespeare.txt"`)
+
+A ready-to-run notebook is also included at `colab.ipynb` in the repo.
+
 ## Step 1: Train
 
 ```bash
@@ -28,19 +52,19 @@ The default config trains a 6L/6H/384D model (~10M params) on Shakespeare for 50
 - Checkpoints every 1000 steps
 - Final checkpoint + loss log at the end
 
-## Step 3: Generate
+## Step 2: Generate
 
 ```bash
-python generate.py
+python generate.py checkpoint_final.pt
 ```
 
-This loads `checkpoint_final.pt` and generates text from three prompts.
+This loads a checkpoint and generates text from three prompts. You can pass any checkpoint file as an argument.
 
-## Experiments to Try
+## Step 3: Experiment
 
-Once the basic pipeline works, try these to build intuition:
+Once the basic pipeline works, try these to build intuition before the competition:
 
-### Experiment 1: Model Size vs. Quality
+### Model Size vs. Quality
 
 Train three models on the same data and compare output quality:
 
@@ -53,51 +77,30 @@ Train three models on the same data and compare output quality:
 Modify the `train()` call in `train.py`:
 
 ```python
-# tiny
-model, stoi, itos = train("data/shakespeare.txt", n_layer=2, n_head=2, n_embd=128)
+# tiny — fast, good for testing ideas
+model, stoi, itos = train(data_path, n_layer=2, n_head=2, n_embd=128)
 
-# small
-model, stoi, itos = train("data/shakespeare.txt", n_layer=4, n_head=4, n_embd=256)
+# medium — default, good baseline
+model, stoi, itos = train(data_path, n_layer=6, n_head=6, n_embd=384)
 
-# medium (default)
-model, stoi, itos = train("data/shakespeare.txt", n_layer=6, n_head=6, n_embd=384)
+# large — needs more data to justify
+model, stoi, itos = train(data_path, n_layer=12, n_head=12, n_embd=768)
 ```
 
-### Experiment 2: Learning Rate Sensitivity
+### Context Length
 
-Train with three different max learning rates:
-- `3e-4` (conservative — slower convergence, very stable)
-- `1e-3` (default — good balance)
-- `3e-3` (aggressive — faster but may be unstable)
+Train with `block_size=128` vs `block_size=512`. Longer context lets the model capture full stanzas and rhyme schemes, but uses more memory (reduce batch_size to compensate).
 
-### Experiment 3: Context Length
+### Learning Rate
 
-Train with `block_size=128` vs `block_size=512`. Longer context uses more memory per batch (reduce batch_size to compensate) but lets the model capture longer-range dependencies like verse structure.
-
-### Experiment 4: Scaling to BPE + TinyStories
-
-Once you've validated with character-level Shakespeare, try BPE tokenization on a larger dataset:
-
-```python
-# download TinyStories
-from datasets import load_dataset
-dataset = load_dataset("roneneldan/TinyStories", split="train[:100000]")
-
-with open("data/tinystories.txt", "w") as f:
-    for example in dataset:
-        f.write(example["text"] + "\n")
-```
-
-For TinyStories, switch from character-level to `tiktoken` (GPT-2's BPE tokenizer) — the dataset is large enough (100k+ stories) for the 50k vocab to work.
+Try `3e-4` (conservative), `1e-3` (default), `3e-3` (aggressive). The right LR depends on your model size and data.
 
 ## Monitoring Training
 
-### Loss Curves
-
-The training loop saves `loss_log.json`. You can plot it with any tool you like:
+The training loop saves `loss_log.json`. You can plot it with any tool:
 
 ```python
-# pip install matplotlib (not included in workshop deps)
+# pip install matplotlib
 import json, matplotlib.pyplot as plt
 
 with open("loss_log.json") as f:
@@ -108,27 +111,31 @@ plt.plot(log["steps"], log["train"], alpha=0.3, label="train")
 plt.xlabel("Step")
 plt.ylabel("Loss")
 plt.legend()
-plt.title("Training Loss")
 plt.savefig("loss_curve.png")
 plt.show()
 ```
 
 ### What to Look For
 
-- **Train loss not decreasing**: Learning rate too low, or a bug in the training loop
-- **Train loss decreasing, val loss increasing**: Overfitting — reduce model size, add dropout, or get more data
-- **Loss spikes**: Training instability — reduce learning rate or check gradient clipping
-- **Loss plateaus**: Model has learned what it can from this data. Try more data or a larger model
+- **Train loss not decreasing**: Learning rate too low, or a bug
+- **Train loss decreasing, val loss increasing**: Overfitting — more data or smaller model
+- **Loss spikes**: Reduce learning rate or check gradient clipping
+- **Loss plateaus**: Model has learned what it can. More data or bigger model
 
-## Going Further
+## Now: The Competition
 
-After completing this workshop, explore:
+You've trained a model, you've seen it overfit, you've experimented with configs. Now apply everything you've learned.
 
-1. **nanochat** — Karpathy's full ChatGPT pipeline (pretraining → SFT → RLHF): https://github.com/karpathy/nanochat
-2. **microgpt** — A full GPT in 200 lines of pure Python, no dependencies: http://karpathy.github.io/2026/02/12/microgpt/
-3. **MLX native training** — Apple's ML framework for better Mac performance: https://github.com/dx-dtran/gpt2-mlx
-4. **The original papers**:
-   - [Attention Is All You Need](https://arxiv.org/abs/1706.03762) — The transformer
-   - [GPT-2 paper](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) — Language models as unsupervised learners
-   - [TinyStories](https://arxiv.org/abs/2305.07759) — Small models trained on curated data
-   - [Chinchilla (2022)](https://arxiv.org/abs/2203.15556) — Optimal scaling of data vs. parameters
+### [Part 6 — Competition: Best AI Poet →](06-competition.md)
+
+The goal: find a good poetry dataset, train the best model you can, and submit the best poem your model generates. You can change anything — the data, the model size, the tokenizer, the training strategy. The only rules: you train it from scratch on your laptop, and the poem comes from the model.
+
+## Further Reading
+
+- [Karpathy's microgpt](http://karpathy.github.io/2026/02/12/microgpt/) — A full GPT in 200 lines of pure Python
+- [build-nanogpt video lecture](https://github.com/karpathy/build-nanogpt) — 4-hour video building GPT-2 from an empty file
+- [nanochat](https://github.com/karpathy/nanochat) — Full ChatGPT clone training pipeline
+- [Attention Is All You Need (2017)](https://arxiv.org/abs/1706.03762) — The original transformer paper
+- [GPT-2 paper (2019)](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) — Language models as unsupervised learners
+- [TinyStories paper](https://arxiv.org/abs/2305.07759) — Small models trained on curated data
+- [Chinchilla (2022)](https://arxiv.org/abs/2203.15556) — Optimal scaling of data vs. parameters

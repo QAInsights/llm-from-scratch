@@ -2,6 +2,8 @@
 
 LLMs don't see text — they see sequences of integers. A tokenizer converts between the two.
 
+No file to create here — the tokenizer is built directly into `train.py` (Part 3). This part explains how it works so you understand what you're writing later.
+
 ## Character-Level Tokenization
 
 We use the simplest possible tokenizer: each unique character gets an ID.

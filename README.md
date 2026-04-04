@@ -15,16 +15,32 @@ A working GPT model trained from scratch on your MacBook, capable of generating 
 
 ## Prerequisites
 
-- MacBook with Apple Silicon (M1/M2/M3/M4), 16GB+ RAM
+- Any laptop or desktop (Mac, Linux, or Windows)
 - Python 3.12+
 - Comfort reading Python code (you don't need ML experience)
 
+Training uses Apple Silicon GPU (MPS), NVIDIA GPU (CUDA), or CPU automatically. Also works on [Google Colab](https://colab.research.google.com/) — upload the files and run with `!python train.py`.
+
 ## Getting Started
+
+### Local (recommended)
 
 ```bash
 uv sync
 mkdir scratchpad && cd scratchpad
 ```
+
+### Google Colab
+
+If you don't have a local setup, upload the repo to Colab and install dependencies:
+
+```python
+!pip install torch numpy tqdm tiktoken
+```
+
+Upload `data/shakespeare.txt` to your Colab files, then write your code in notebook cells or upload `.py` files and run them with `!python train.py`.
+
+---
 
 Work through the docs in order. Each part walks you through writing a piece of the pipeline, explaining what each component does and why. By the end, you'll have a working `model.py`, `train.py`, and `generate.py` that you wrote yourself.
 
@@ -35,6 +51,7 @@ Work through the docs in order. Each part walks you through writing a piece of t
 | [Part 3: The Training Loop](docs/03-training-loop.md) | Complete training pipeline | Loss functions, AdamW, gradient clipping, LR scheduling |
 | [Part 4: Text Generation](docs/04-text-generation.md) | Inference and sampling | Temperature, top-k, autoregressive decoding |
 | [Part 5: Putting It All Together](docs/05-putting-it-together.md) | Train on real data, experiment | Loss curves, scaling experiments, next steps |
+| [Part 6: Competition](docs/06-competition.md) | Train the best AI poet | Find datasets, scale up, submit your best poem |
 
 ## Architecture: GPT at a Glance
 
