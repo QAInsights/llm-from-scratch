@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Scratchpads (working code, not committed)
+**/scratchpad/
+
+# Training artifacts
+*.pt
+*.bin
+*.safetensors
+loss_log.json
+*.png
+*.wav
+
+# Data (scratchpad data is ignored, top-level data/ is committed)
+scratchpad/data/
