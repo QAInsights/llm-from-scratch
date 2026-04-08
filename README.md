@@ -1,6 +1,10 @@
-# Train Your Own LLM on a MacBook — From Scratch
+# Train Your Own LLM From Scratch
 
 A hands-on workshop where you write every piece of a GPT training pipeline yourself, understanding what each component does and why.
+
+Andrej Karpathy's [nanoGPT](https://github.com/karpathy/nanoGPT) was my first real exposure to LLMs and transformers. Seeing how a working language model could be built in a few hundred lines of PyTorch completely changed how I thought about AI and inspired me to go deeper into the space.
+
+This workshop is my attempt to give others that same experience. nanoGPT targets reproducing GPT-2 (124M params) and covers a lot of ground. This project strips it down to the essentials and scales it to a ~10M param model that trains on a laptop in under an hour — designed to be completed in a single workshop session.
 
 No black-box libraries. No `model = AutoModel.from_pretrained()`. You build it all.
 
@@ -123,8 +127,9 @@ Part 5 covers switching to BPE for larger datasets.
 
 ## Key References
 
-- [Karpathy's microgpt](http://karpathy.github.io/2026/02/12/microgpt/) — A full GPT in 200 lines of pure Python
+- [nanoGPT](https://github.com/karpathy/nanoGPT) — The project this workshop is based on. Minimal GPT training in ~300 lines of PyTorch
 - [build-nanogpt video lecture](https://github.com/karpathy/build-nanogpt) — 4-hour video building GPT-2 from an empty file
+- [Karpathy's microgpt](http://karpathy.github.io/2026/02/12/microgpt/) — A full GPT in 200 lines of pure Python, no dependencies
 - [nanochat](https://github.com/karpathy/nanochat) — Full ChatGPT clone training pipeline
 - [Attention Is All You Need (2017)](https://arxiv.org/abs/1706.03762) — The original transformer paper
 - [GPT-2 paper (2019)](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf) — Language models as unsupervised learners

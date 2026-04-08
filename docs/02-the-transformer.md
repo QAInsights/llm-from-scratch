@@ -85,6 +85,33 @@ Two embedding tables:
         return logits, loss
 ```
 
+```
+token IDs (B, T)
+    │
+    ▼
+┌─────────┐     ┌─────────┐
+│   wte   │     │   wpe   │
+│ [65,384]│     │[256,384]│
+└─────────┘     └─────────┘
+    │               │
+    ▼               ▼
+  tok_emb    +   pos_emb      → x (B, T, 384)
+                                  │
+                                  ▼
+                          ┌──────────────┐
+                          │ Block × 6    │
+                          └──────────────┘
+                                  │
+                                  ▼
+                          ┌──────────────┐
+                          │  LayerNorm   │
+                          │   lm_head    │  Linear: 384 → 65
+                          └──────────────┘
+                                  │
+                                  ▼
+                          logits (B, T, 65)
+```
+
 The position embedding is added to the token embedding — this is how the model knows word order. Without it, "the dog bit the man" and "the man bit the dog" would look identical.
 
 ### Self-Attention
@@ -121,6 +148,35 @@ class CausalSelfAttention(nn.Module):
         return self.c_proj(y)
 ```
 
+```
+x (B, T, 384)
+    │
+    ▼
+┌─────────┐
+│  c_attn │  one Linear → split into Q, K, V
+└─────────┘
+    │
+    ▼
+┌─────────────────────────────┐
+│  split into 6 heads         │  each head: (B, T, 64)
+│                             │
+│  Q @ K^T / sqrt(64)         │  similarity scores
+│  mask future positions      │  causal: can only look back
+│  softmax → weights          │
+│  weights @ V                │  weighted combination
+│                             │
+│  head1  head2  ...  head6   │
+└─────────────────────────────┘
+    │
+    ▼  concatenate all heads
+┌─────────┐
+│  c_proj │  project back to 384 dims
+└─────────┘
+    │
+    ▼
+output (B, T, 384)
+```
+
 Breaking this down:
 
 1. **Q, K, V projections**: A single linear layer projects the input into three matrices — Query, Key, and Value. Each is `(B, T, n_embd)`.
@@ -153,6 +209,28 @@ class MLP(nn.Module):
         return self.c_proj(x)  # project back down: 1536 → 384
 ```
 
+```
+x (B, T, 384)
+    │
+    ▼
+┌─────────┐
+│  c_fc   │  Linear: 384 → 1536 (expand 4x)
+└─────────┘
+    │
+    ▼
+┌─────────┐
+│  GELU   │  non-linearity
+└─────────┘
+    │
+    ▼
+┌─────────┐
+│  c_proj │  Linear: 1536 → 384 (project back)
+└─────────┘
+    │
+    ▼
+output (B, T, 384)
+```
+
 The MLP is applied independently to each position. It expands the representation to 4x the embedding dimension, applies a non-linearity (GELU), and projects back down. This is where the model does most of its "thinking" — the attention gathers information, the MLP processes it.
 
 **Why GELU instead of ReLU?** GELU (Gaussian Error Linear Unit) is smoother than ReLU. It doesn't have a hard cutoff at zero, which helps gradient flow. GPT-2 uses the `tanh` approximation for speed.
@@ -172,6 +250,41 @@ class Block(nn.Module):
         x = x + self.attn(self.ln_1(x))   # attention with residual connection
         x = x + self.mlp(self.ln_2(x))    # MLP with residual connection
         return x
+```
+
+```
+x (B, T, 384)
+    │
+    ├───────────────────┐
+    ▼                   │
+┌──────────┐            │
+│ LayerNorm│            │
+└──────────┘            │
+    │                   │
+    ▼                   │
+┌──────────┐            │
+│ Self-Attn│            │
+└──────────┘            │
+    │                   │
+    ▼                   │
+  + ◄───────────────────┘  residual connection
+    │
+    ├───────────────────┐
+    ▼                   │
+┌──────────┐            │
+│ LayerNorm│            │
+└──────────┘            │
+    │                   │
+    ▼                   │
+┌──────────┐            │
+│   MLP    │            │
+└──────────┘            │
+    │                   │
+    ▼                   │
+  + ◄───────────────────┘  residual connection
+    │
+    ▼
+output (B, T, 384)
 ```
 
 Two key design choices:
