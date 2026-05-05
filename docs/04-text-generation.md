@@ -85,6 +85,41 @@ The pipeline for each token:
 
 The function takes `stoi`/`itos` mappings from the training data — these define how characters map to token IDs and back.
 
+### Command-Line Interface
+
+Add this to the bottom of `generate.py` so you can run it from the terminal:
+
+```python
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate text from a trained GPT checkpoint")
+    parser.add_argument("checkpoint", help="Path to checkpoint file (e.g. checkpoint_final.pt)")
+    parser.add_argument("--prompt", default="To be or not", help="Starting text for generation")
+    parser.add_argument("--max_new_tokens", type=int, default=200, help="Number of tokens to generate")
+    parser.add_argument("--temperature", type=float, default=0.8, help="Sampling temperature (lower = more deterministic)")
+    parser.add_argument("--top_k", type=int, default=40, help="Only sample from top-k most likely tokens")
+    parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility")
+    args = parser.parse_args()
+
+    if args.seed is not None:
+        torch.manual_seed(args.seed)
+
+    checkpoint = torch.load(args.checkpoint, weights_only=False)
+    config = checkpoint["config"]
+    stoi = checkpoint["stoi"]
+    itos = checkpoint["itos"]
+
+    model = GPT(config)
+    model.load_state_dict(checkpoint["model_state_dict"])
+
+    output = generate(model, args.prompt, stoi, itos,
+                      max_new_tokens=args.max_new_tokens,
+                      temperature=args.temperature,
+                      top_k=args.top_k)
+    print(output)
+```
+
 ## Reproducibility with Seeds
 
 Generation involves random sampling (`torch.multinomial`), so the same prompt produces different output each time. To get reproducible results, set a seed before generating:
