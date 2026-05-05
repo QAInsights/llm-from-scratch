@@ -194,6 +194,24 @@ def train(data_path, max_steps=5000, batch_size=64,
     return model, stoi, itos
 ```
 
+### Step 6: Entry Point
+
+Add this to the bottom of `train.py` so you can run it from the terminal:
+
+```python
+if __name__ == "__main__":
+    train("../data/shakespeare.txt")
+```
+
+This calls the training function with the default config (6L/6H/384D, 5000 steps) and the included Shakespeare dataset. You can customize the model by passing different arguments:
+
+```python
+if __name__ == "__main__":
+    import sys
+    data_path = sys.argv[1] if len(sys.argv) > 1 else "../data/shakespeare.txt"
+    train(data_path)
+```
+
 ### What Each Part Does
 
 **Validation loss**: Every 100 steps, evaluate on held-out data. If train loss goes down but val loss goes up, you're overfitting.
