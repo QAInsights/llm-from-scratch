@@ -94,6 +94,7 @@ For character-level training on Shakespeare, plain `AdamW` with `lr=1e-3` and li
 ### Step 5: The Full Training Loop
 
 ```python
+import json
 from tqdm import tqdm
 
 def train(data_path, max_steps=5000, batch_size=64,
@@ -121,6 +122,8 @@ def train(data_path, max_steps=5000, batch_size=64,
     max_lr = 1e-3
     min_lr = max_lr * 0.1
     warmup_steps = 100
+
+    loss_log = {"steps": [], "train": [], "val": []}
 
     pbar = tqdm(range(max_steps), desc="Training")
     for step in pbar:
@@ -152,6 +155,12 @@ def train(data_path, max_steps=5000, batch_size=64,
 
         pbar.set_postfix(loss=f"{loss.item():.4f}", lr=f"{lr:.2e}")
 
+        # --- log loss ---
+        loss_log["steps"].append(step)
+        loss_log["train"].append(loss.item())
+        if step % 100 == 0:
+            loss_log["val"].append(val_loss)
+
         # --- generate sample ---
         if step > 0 and step % 100 == 0:
             model.eval()
@@ -170,6 +179,18 @@ def train(data_path, max_steps=5000, batch_size=64,
                 "itos": itos,
             }, f"checkpoint_{step}.pt")
 
+    # --- save final checkpoint and loss log ---
+    torch.save({
+        "step": max_steps,
+        "model_state_dict": model.state_dict(),
+        "config": config,
+        "stoi": stoi,
+        "itos": itos,
+    }, "checkpoint_final.pt")
+
+    with open("loss_log.json", "w") as f:
+        json.dump(loss_log, f)
+
     return model, stoi, itos
 ```
 
@@ -181,7 +202,9 @@ def train(data_path, max_steps=5000, batch_size=64,
 
 **Sample generation**: Every 100 steps, generate text so you can watch the model learn. You'll see it go from random characters → random words → Shakespeare-like text.
 
-**Checkpointing**: Save model state periodically. Checkpoints include `stoi`/`itos` so you can generate text from a saved model without the original data.
+**Checkpointing**: Save model state periodically. Checkpoints include `stoi`/`itos` so you can generate text from a saved model without the original data. A final checkpoint is saved as `checkpoint_final.pt` at the end of training.
+
+**Loss log**: Training and validation losses are saved to `loss_log.json` so you can plot loss curves after training (see Part 5).
 
 ## What Loss Numbers Mean (Character-Level, vocab=65)
 
