@@ -61,11 +61,11 @@ def get_lr(
 
 def train(
     data_path: str,
-    max_steps: int = 5000,
+    max_steps: int = 10000,
     batch_size: int = 64,
-    n_layer: int = 6,
-    n_head: int = 6,
-    n_embd: int = 384,
+    n_layer: int = 8,
+    n_head: int = 8,
+    n_embd: int = 512,
     block_size: int = 256,
 ) -> tuple[GPT, dict[str, int], dict[int, str]]:
     """Train a GPT model on the given dataset."""
